@@ -516,7 +516,10 @@ button{
 .producto__inspiracion{
   font-size: .76rem;
   color: var(--tinta-suave);
-  min-height: 1.1em;
+}
+.producto__referencia{
+  font-size: .76rem;
+  color: var(--tinta-media);
 }
 .producto__precio{
   margin-top: auto;
@@ -771,3 +774,15 @@ button{
   font-size: .7rem;
   opacity: .6;
 }
+.limpiar{
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--paso-2);
+  padding: .3rem 0;
+  font-size: .85rem;
+  color: var(--tinta-media);
+  text-decoration: underline;
+  text-decoration-color: var(--linea-firme);
+  text-underline-offset: .2em;
+}
+.limpiar:active{ color: var(--tinta); }
