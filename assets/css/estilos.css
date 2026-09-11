@@ -1,9 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+
 /* ============================================================
    FRAICHE · Catálogo — Fase 1
    Hoja de estilos única, organizada por bloques:
    1. Tokens   2. Base   3. Barra   4. Menú   5. Vistas
    6. Inicio   7. Categorías   8. Productos   9. Ficha
    10. Buscador  11. Contacto  12. Pie  13. Escritorio
+   14. Explorador (Mujer)  15. Identidad visual — Inicio
    ============================================================ */
 
 /* ── 1. Tokens ───────────────────────────────────────────── */
@@ -786,3 +789,141 @@ button{
   text-underline-offset: .2em;
 }
 .limpiar:active{ color: var(--tinta); }
+
+/* ── 15. Identidad visual — Inicio (Fase 1 de rediseño) ───
+   Paleta y tipografía premium exclusivas de la vista Inicio.
+   Todo vive dentro de .pagina-inicio: ninguna otra interfaz cambia
+   (la ficha usa su propio .entrega sin este contenedor, por ejemplo). */
+.pagina-inicio{
+  --noche: #0A1220;
+  --noche-2: #141F35;
+  --noche-3: #0D1526;
+  --champan: #C9A76A;
+  --champan-claro: #E8D6AC;
+  --champan-linea: rgba(201, 167, 106, .35);
+  --rosa-empolvado: #E7CDCD;
+  --vino: #7C4B52;
+  --marfil: #F8F2E7;
+  --marfil-suave: rgba(248, 242, 231, .74);
+  --display-premium: "Playfair Display", var(--display);
+
+  position: relative;
+  overflow: hidden;
+  margin: calc(-1 * var(--paso-4)) calc(-1 * var(--paso-3)) 0;
+  padding: var(--paso-5) var(--paso-3) var(--paso-5);
+  background:
+    radial-gradient(ellipse 640px 420px at 12% -8%, rgba(201, 167, 106, .20), transparent 60%),
+    radial-gradient(ellipse 520px 480px at 108% 18%, rgba(124, 75, 82, .28), transparent 58%),
+    radial-gradient(ellipse 720px 520px at 45% 118%, rgba(201, 167, 106, .14), transparent 62%),
+    linear-gradient(180deg, var(--noche) 0%, var(--noche-2) 55%, var(--noche-3) 100%);
+  color: var(--marfil);
+}
+
+/* Motivo decorativo extremadamente discreto, solo CSS */
+.pagina-inicio::before{
+  content: "";
+  position: absolute;
+  top: -70px; right: -70px;
+  width: 260px; height: 260px;
+  background:
+    radial-gradient(circle at 30% 30%, var(--champan-linea), transparent 70%),
+    radial-gradient(circle at 68% 66%, var(--champan-linea), transparent 65%);
+  opacity: .55;
+  filter: blur(3px);
+  pointer-events: none;
+}
+.pagina-inicio::after{
+  content: "";
+  position: absolute;
+  left: -50px; bottom: 12%;
+  width: 190px; height: 190px;
+  background: radial-gradient(circle, rgba(231, 205, 205, .16), transparent 70%);
+  pointer-events: none;
+}
+
+@media (min-width: 700px){
+  .pagina-inicio{
+    margin: calc(-1 * var(--paso-5)) calc(-1 * var(--paso-4)) 0;
+    padding: var(--paso-6) var(--paso-4) var(--paso-6);
+  }
+}
+
+/* Portada */
+.pagina-inicio .portada{
+  position: relative;
+  z-index: 1;
+  border-bottom: none;
+  padding: 0 0 var(--paso-4);
+}
+.pagina-inicio .portada__marca{
+  font-family: var(--display-premium);
+  font-weight: 600;
+  color: var(--champan);
+  text-shadow: 0 0 30px rgba(201, 167, 106, .22);
+}
+.pagina-inicio .portada__linea{
+  color: var(--champan-claro);
+  font-weight: 500;
+}
+.pagina-inicio .portada__linea::before,
+.pagina-inicio .portada__linea::after{
+  background: var(--champan-linea);
+}
+.pagina-inicio .portada__texto{
+  color: var(--rosa-empolvado);
+}
+
+/* Atajos */
+.pagina-inicio .atajo{
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .045);
+  border-color: var(--champan-linea);
+  color: var(--marfil);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.pagina-inicio .atajo--whats{
+  background: rgba(124, 75, 82, .24);
+  border-color: var(--vino);
+  color: var(--rosa-empolvado);
+}
+
+/* Categorías */
+.pagina-inicio .bloque__titulo{
+  position: relative;
+  z-index: 1;
+  font-family: var(--display-premium);
+  color: var(--champan-claro);
+}
+.pagina-inicio .categoria{
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .045);
+  border-color: var(--champan-linea);
+}
+.pagina-inicio .categoria:active{
+  border-color: var(--champan);
+  background: rgba(255, 255, 255, .08);
+}
+.pagina-inicio .categoria__glifo{ color: var(--champan); }
+.pagina-inicio .categoria__nombre{
+  font-family: var(--display-premium);
+  color: var(--marfil);
+}
+.pagina-inicio .categoria__nota{ color: var(--marfil-suave); }
+
+/* Entrega (solo esta instancia; la de la ficha de producto no cambia) */
+.pagina-inicio .entrega{
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .045);
+  border-color: var(--champan-linea);
+  color: var(--marfil-suave);
+}
+.pagina-inicio .entrega svg{ color: var(--champan); }
+
+@media (prefers-reduced-motion: reduce){
+  .pagina-inicio::before,
+  .pagina-inicio::after{ filter: none; }
+}
