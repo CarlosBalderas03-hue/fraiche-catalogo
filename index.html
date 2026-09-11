@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15272C">
+<meta name="description" content="Catálogo Fraiche: fragancias, cuidado personal, aromatizantes, hogar y cosméticos. Entregas a domicilio y pedidos por WhatsApp.">
+<title>Fraiche — Catálogo</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/estilos.css">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Ir al contenido</a>
+
+<!-- ── Barra superior: regreso · ruta · menú ───────────────── -->
+<header class="barra" id="barra">
+  <div class="barra__interior">
+    <button class="barra__btn" id="btn-regresar" type="button" aria-label="Regresar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+    </button>
+
+    <div class="barra__centro">
+      <span class="barra__marca" id="barra-marca">Fraiche</span>
+      <nav class="ruta" id="ruta" aria-label="Ubicación actual"></nav>
+    </div>
+
+    <button class="barra__btn" id="btn-menu" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ── Menú lateral ────────────────────────────────────────── -->
+<div class="velo" id="velo" hidden></div>
+<nav class="menu" id="menu" aria-label="Menú principal" hidden>
+  <div class="menu__encabezado">
+    <span class="menu__titulo">Catálogo</span>
+    <button class="barra__btn" id="btn-cerrar-menu" type="button" aria-label="Cerrar menú">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <ul class="menu__lista" id="menu-lista"></ul>
+</nav>
+
+<!-- ── Contenedor único de vistas ──────────────────────────── -->
+<main class="vista" id="contenido" tabindex="-1"></main>
+
+<!-- ── Pie ─────────────────────────────────────────────────── -->
+<footer class="pie">
+  <p class="pie__marca">Fraiche</p>
+  <p class="pie__nota" id="pie-entregas"></p>
+  <p class="pie__legal">Catálogo informativo · Fase 1</p>
+</footer>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/vistas.js"></script>
+<script src="assets/js/router.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
