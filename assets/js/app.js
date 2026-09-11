@@ -112,19 +112,21 @@
     campo.focus({ preventScroll: true });
   }
 
-  /* ── Fragancias Mujer: buscador + tres exploradores ─────── */
+  /* ── Fragancias Mujer: buscador + clasificación + casa→referencia + aroma ── */
   function enlazarFraganciasMujer(segmentos){
     if (segmentos[0] !== "fragancias" || segmentos[1] !== "mujer") return;
 
-    const campo = document.getElementById("mujer-busqueda");
-    const caja  = document.getElementById("mujer-resultados");
+    const campo   = document.getElementById("mujer-busqueda");
+    const caja    = document.getElementById("mujer-resultados");
+    const panelRef = document.getElementById("mujer-referencias");
+    const btnLimpiar = document.getElementById("mujer-limpiar");
     if (!campo || !caja) return;
 
-    const botonesEtiqueta    = Array.from(document.querySelectorAll("[data-explorar]"));
-    const botonesInspiracion = Array.from(document.querySelectorAll("[data-inspiracion]"));
-    const botonesAroma       = Array.from(document.querySelectorAll("[data-aroma]"));
+    const botonesEtiqueta = Array.from(document.querySelectorAll("[data-explorar]"));
+    const botonesCasa     = Array.from(document.querySelectorAll("[data-casa]"));
+    const botonesAroma    = Array.from(document.querySelectorAll("[data-aroma]"));
 
-    const estado = { texto: "", etiqueta: "todas", inspiracion: "", aroma: "" };
+    const estado = { texto: "", etiqueta: "todas", inspiracion: "", referencia: "", aroma: "" };
 
     function pintar(){
       caja.innerHTML = resultadosMujer(Datos.explorar("mujer", estado));
@@ -135,6 +137,10 @@
       pintar();
     });
 
+    if (btnLimpiar){
+      btnLimpiar.addEventListener("click", () => Router.resolver());
+    }
+
     botonesEtiqueta.forEach(b => {
       b.addEventListener("click", () => {
         estado.etiqueta = b.dataset.explorar;
@@ -143,20 +149,56 @@
       });
     });
 
-    /* Inspiración y aroma son facetas opcionales: tocar la ya activa la quita. */
-    function enlazarFaceta(botones, clave){
-      botones.forEach(b => {
+    /* Casa de inspiración: faceta opcional (tocar la activa la quita).
+       Al cambiar de casa, sus referencias se regeneran y la referencia
+       elegida anteriormente se descarta, porque pertenecía a otra casa. */
+    botonesCasa.forEach(b => {
+      b.addEventListener("click", () => {
+        const activo = b.getAttribute("aria-pressed") === "true";
+        botonesCasa.forEach(o => o.setAttribute("aria-pressed", "false"));
+
+        estado.referencia = "";
+        if (activo){
+          estado.inspiracion = "";
+          if (panelRef) panelRef.innerHTML = renderizarReferencias(null);
+        } else {
+          b.setAttribute("aria-pressed", "true");
+          const casa = Datos.casaInspiracion(b.dataset.casa);
+          estado.inspiracion = casa ? casa.nombre : "";
+          if (panelRef) panelRef.innerHTML = renderizarReferencias(b.dataset.casa);
+        }
+        enlazarChipsReferencia();
+        pintar();
+      });
+    });
+
+    /* Referencia: se regenera cada vez que cambia la casa, así que sus
+       botones se vuelven a enlazar cada vez que aparecen en el DOM. */
+    function enlazarChipsReferencia(){
+      Array.from(document.querySelectorAll("[data-referencia]")).forEach(b => {
         b.addEventListener("click", () => {
           const activo = b.getAttribute("aria-pressed") === "true";
-          botones.forEach(o => o.setAttribute("aria-pressed", "false"));
-          estado[clave] = activo ? "" : b.dataset[clave];
+          document.querySelectorAll("[data-referencia]").forEach(o => o.setAttribute("aria-pressed", "false"));
+          estado.referencia = activo ? "" : b.dataset.referencia;
           if (!activo) b.setAttribute("aria-pressed", "true");
           pintar();
         });
       });
     }
-    enlazarFaceta(botonesInspiracion, "inspiracion");
-    enlazarFaceta(botonesAroma, "aroma");
+    enlazarChipsReferencia();
+
+    /* Aroma: faceta opcional, igual que casa. Hoy no hay datos de aroma
+       en el catálogo maestro, así que este panel queda vacío hasta que
+       se incorporen. */
+    botonesAroma.forEach(b => {
+      b.addEventListener("click", () => {
+        const activo = b.getAttribute("aria-pressed") === "true";
+        botonesAroma.forEach(o => o.setAttribute("aria-pressed", "false"));
+        estado.aroma = activo ? "" : b.dataset.aroma;
+        if (!activo) b.setAttribute("aria-pressed", "true");
+        pintar();
+      });
+    });
   }
 
   /* ── Arranque ──────────────────────────────────────────── */

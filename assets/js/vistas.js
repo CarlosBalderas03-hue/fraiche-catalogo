@@ -20,15 +20,20 @@ const marco = (nombreGlifo, etiqueta, clase) =>
     (etiqueta ? '<span class="marco__etiqueta">' + esc(etiqueta) + "</span>" : "") +
   "</div>";
 
-/* Tarjeta de producto usada en todas las grillas */
+/* Tarjeta de producto usada en todas las grillas. Casa de inspiración y
+   referencia específica se muestran en líneas separadas: nunca se
+   combinan en un solo campo. */
 function tarjetaProducto(p){
   const cat = Datos.categoria(p.categoria);
+  const sinInspiracion = !p.inspiracion && !p.referenciaInspiracion;
   return '<a class="producto" href="#/producto/' + esc(p.id) + '">' +
     marco(cat ? cat.glifo : "frasco", "Foto pendiente") +
     '<div class="producto__cuerpo">' +
       '<h3 class="producto__nombre">' + esc(p.nombre) + "</h3>" +
       (p.clave ? '<p class="producto__clave">Clave ' + esc(p.clave) + "</p>" : "") +
-      '<p class="producto__inspiracion">' + (p.inspiracion ? "Inspirada en " + esc(p.inspiracion) : "Referencia pendiente") + "</p>" +
+      (p.inspiracion ? '<p class="producto__inspiracion">Inspiración ' + esc(p.inspiracion) + "</p>" : "") +
+      (p.referenciaInspiracion ? '<p class="producto__referencia">Referencia ' + esc(p.referenciaInspiracion) + "</p>" : "") +
+      (sinInspiracion ? '<p class="producto__inspiracion">Inspiración por confirmar</p>' : "") +
       '<p class="producto__precio">' + esc(Datos.precio(p.precio)) + "</p>" +
       '<p class="producto__ver">Ver producto</p>' +
     "</div>" +
@@ -120,14 +125,17 @@ function vistaFragancias(){
 }
 
 /* ── FRAGANCIAS MUJER (explorador de catálogo) ───────────── */
-/* Interfaz específica de "Mujer": buscador + tres exploradores
-   (clasificación, inspiración, aroma) sobre el mismo conjunto de
-   productos. Hombre, Unisex y Otras categorías siguen usando
-   vistaLista() sin cambios. */
+/* Interfaz específica de "Mujer": buscador (nombre, clave, casa,
+   referencia) + clasificación comercial (Fase A, intacta) + filtro
+   casa de inspiración → referencia (desde el catálogo maestro
+   CASAS_INSPIRACION, nunca escrito a mano en la interfaz) + aroma
+   (queda preparado; el catálogo maestro todavía no trae ese dato).
+   Hombre, Unisex y Otras categorías siguen usando vistaLista() sin
+   cambios. */
 function vistaFraganciasMujer(){
   const base = Datos.explorar("mujer", {});
-  const inspiraciones = Datos.valoresUnicos(base, "inspiracion");
   const aromas = Datos.valoresUnicos(base, "aroma");
+  const casasOrdenadas = CASAS_INSPIRACION.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 
   const chip = (atributo, valor, texto, activo, cuenta) =>
     '<button class="filtro" type="button" data-' + atributo + '="' + esc(valor) + '" aria-pressed="' + activo + '">' +
@@ -138,8 +146,8 @@ function vistaFraganciasMujer(){
     .map((f, i) => chip("explorar", f.id, f.nombre, i === 0, ""))
     .join("");
 
-  const chipsInspiracion = inspiraciones
-    .map(x => chip("inspiracion", x.valor, x.valor, false, x.cantidad))
+  const chipsCasa = casasOrdenadas
+    .map(c => chip("casa", c.id, c.nombre, false, ""))
     .join("");
 
   const chipsAroma = aromas
@@ -147,13 +155,14 @@ function vistaFraganciasMujer(){
     .join("");
 
   const html =
-    cabezaSeccion("Fragancias Mujer", "Busca por nombre, clave o inspiración, o explora el catálogo por clasificación, inspiración y aroma.") +
+    cabezaSeccion("Fragancias para Mujer", base.length + " fragancias para explorar por nombre, clave, casa de inspiración o referencia.") +
 
     '<div class="busqueda">' +
       '<svg viewBox="0 0 32 32" aria-hidden="true">' + GLIFOS.lupa + "</svg>" +
       '<label class="oculto-visual" for="mujer-busqueda">Buscar fragancias de mujer</label>' +
-      '<input id="mujer-busqueda" type="search" autocomplete="off" placeholder="Buscar por nombre, clave o inspiración">' +
+      '<input id="mujer-busqueda" type="search" autocomplete="off" placeholder="Buscar por nombre, clave, casa o referencia">' +
     "</div>" +
+    '<button class="limpiar" type="button" id="mujer-limpiar">Limpiar filtros</button>' +
 
     '<section class="explorador">' +
       '<h2 class="explorador__titulo">Explorar fragancias</h2>' +
@@ -161,10 +170,13 @@ function vistaFraganciasMujer(){
     "</section>" +
 
     '<section class="explorador">' +
-      '<h2 class="explorador__titulo">Explorar por inspiración</h2>' +
-      (chipsInspiracion
-        ? '<div class="filtros" role="group" aria-label="Filtrar por inspiración">' + chipsInspiracion + "</div>"
-        : '<div class="aviso">Las familias de inspiración aparecerán aquí cuando se incorporen los datos reales.</div>') +
+      '<h2 class="explorador__titulo">Explorar por casa de inspiración</h2>' +
+      '<div class="filtros" role="group" aria-label="Filtrar por casa de inspiración">' + chipsCasa + "</div>" +
+    "</section>" +
+
+    '<section class="explorador">' +
+      '<h2 class="explorador__titulo">Explorar por referencia</h2>' +
+      '<div id="mujer-referencias">' + renderizarReferencias(null) + "</div>" +
     "</section>" +
 
     '<section class="explorador">' +
@@ -179,7 +191,7 @@ function vistaFraganciasMujer(){
     "</section>";
 
   return {
-    titulo: "Fragancias Mujer",
+    titulo: "Fragancias para Mujer",
     ruta: [
       { texto: "Inicio", destino: "#/inicio" },
       { texto: "Fragancias", destino: "#/fragancias" },
@@ -190,11 +202,29 @@ function vistaFraganciasMujer(){
   };
 }
 
+/* Panel de referencias de una casa de inspiración. Sin casa seleccionada
+   muestra una pista; con casa seleccionada, sus referencias como chips
+   (desde CASAS_INSPIRACION, nunca escritas a mano); si la casa todavía
+   no tiene referencias registradas, lo dice explícitamente. */
+function renderizarReferencias(idCasa){
+  if (!idCasa){
+    return '<div class="aviso">Elige una casa de inspiración para ver sus referencias.</div>';
+  }
+  const casa = Datos.casaInspiracion(idCasa);
+  if (!casa || !casa.referencias.length){
+    return '<div class="aviso">Esta casa todavía no tiene referencias registradas.</div>';
+  }
+  const chips = casa.referencias
+    .map(r => '<button class="filtro" type="button" data-referencia="' + esc(r) + '" aria-pressed="false">' + esc(r) + "</button>")
+    .join("");
+  return '<div class="filtros" role="group" aria-label="Filtrar por referencia de ' + esc(casa.nombre) + '">' + chips + "</div>";
+}
+
 /* Resultados del explorador de Mujer. Se redibuja al buscar o filtrar,
-   sin recargar la vista. Preparado para las 95 fragancias reales. */
+   sin recargar la vista. */
 function resultadosMujer(lista){
   if (!lista.length){
-    return '<div class="aviso"><strong>Sin resultados.</strong> Ajusta la búsqueda o los filtros para ver otras fragancias.</div>';
+    return '<div class="aviso"><strong>No encontramos fragancias que coincidan con tu búsqueda.</strong></div>';
   }
   return '<p class="resultados__conteo">' + lista.length +
       (lista.length === 1 ? " fragancia" : " fragancias") + "</p>" +
@@ -289,8 +319,10 @@ function vistaProducto(id){
           fila("Género", p.genero || "—") +
           fila("Presentación", p.presentacion || "—") +
           (p.clave ? fila("Clave", p.clave) : "") +
-          (p.aroma ? fila("Aroma", p.aroma) : "") +
           (p.clasificacion ? fila("Clasificación", p.clasificacion) : "") +
+          (p.subclasificacionTendencia ? fila("Subclasificación", p.subclasificacionTendencia) : "") +
+          (p.aroma ? fila("Aroma", p.aroma) : "") +
+          (p.familiaOlfativa ? fila("Familia olfativa", p.familiaOlfativa) : "") +
           fila("Descripción", p.descripcion || "Pendiente.") +
         "</div>" +
 
