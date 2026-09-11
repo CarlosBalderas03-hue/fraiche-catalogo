@@ -53,10 +53,22 @@ const CATEGORIAS = [
   { id: "cosmeticos",       nombre: "Cosméticos",       nota: "Maquillaje y belleza", glifo: "cosmetico", subcategorias: [] }
 ];
 
+/* ── Clasificaciones para "Explorar fragancias" ──────────── */
+/* Lista fija de la interfaz. Un producto puede tener varias, o ninguna. */
+const FILTROS_EXPLORAR = [
+  { id: "todas",            nombre: "Todas" },
+  { id: "tendencias",       nombre: "Tendencias" },
+  { id: "nuevas",           nombre: "Nuevas" },
+  { id: "edicion-limitada", nombre: "Edición limitada" },
+  { id: "clasicas",         nombre: "Clásicas" },
+  { id: "esencias-master",  nombre: "Esencias Master" }
+];
+
 /* ── Esquema de producto ─────────────────────────────────── */
 /*
   {
-    id: "frg-001",              // único, nunca se repite
+    id: "frg-001",              // único, nunca se repite — identificador interno
+    clave: "",                  // clave corta de catálogo, visible al cliente (ej. "MUJ-014")
     nombre: "",                 // nombre comercial
     categoria: "fragancias",    // id de CATEGORIAS
     subcategoria: "mujer",      // id de subcategoría, o "" si no aplica
@@ -66,16 +78,22 @@ const CATEGORIAS = [
     imagen: "",                 // ruta a la foto; vacío = placeholder
     inspiracion: "",            // fragancia original que inspira, si aplica
     imagenInspiracion: "",      // ruta a la referencia visual
+    aroma: "",                  // nota o aroma principal (ej. "Vainilla")
+    clasificacion: "",          // familia olfativa (ej. "Floral", "Amaderada")
+    momento: "",                // Día | Noche | ""
+    etiquetas: [],              // ids de FILTROS_EXPLORAR que aplican (sin incluir "todas")
     descripcion: "",
     disponible: true
   }
 */
 
-/* Datos mínimos de demostración para comprobar navegación y buscador.
-   NO son productos reales: se eliminan al cargar el catálogo en la Fase 2. */
+/* Datos mínimos de demostración para comprobar navegación, buscador y,
+   en Mujer, el explorador de catálogo. NO son productos reales: se
+   eliminan al incorporar las 95 fragancias reales. */
 const PRODUCTOS = [
   {
     id: "demo-01",
+    clave: "MUJ-DEMO-01",
     nombre: "Demostración 01",
     categoria: "fragancias",
     subcategoria: "mujer",
@@ -83,13 +101,56 @@ const PRODUCTOS = [
     presentacion: "100 ml",
     precio: 0,
     imagen: "",
-    inspiracion: "",
+    inspiracion: "Referencia de prueba A",
     imagenInspiracion: "",
+    aroma: "Aroma de prueba 1",
+    clasificacion: "Floral",
+    momento: "Día",
+    etiquetas: ["tendencias", "nuevas"],
     descripcion: "Registro de prueba. Sirve para verificar que la ficha individual abre y regresa correctamente.",
     disponible: true
   },
   {
+    id: "demo-05",
+    clave: "MUJ-DEMO-02",
+    nombre: "Demostración 05",
+    categoria: "fragancias",
+    subcategoria: "mujer",
+    genero: "Mujer",
+    presentacion: "50 ml",
+    precio: 0,
+    imagen: "",
+    inspiracion: "Referencia de prueba B",
+    imagenInspiracion: "",
+    aroma: "Aroma de prueba 2",
+    clasificacion: "Amaderada",
+    momento: "Noche",
+    etiquetas: ["clasicas"],
+    descripcion: "Registro de prueba para comprobar una segunda familia de inspiración y de aroma.",
+    disponible: true
+  },
+  {
+    id: "demo-06",
+    clave: "MUJ-DEMO-03",
+    nombre: "Demostración 06",
+    categoria: "fragancias",
+    subcategoria: "mujer",
+    genero: "Mujer",
+    presentacion: "100 ml",
+    precio: 0,
+    imagen: "",
+    inspiracion: "Referencia de prueba A",
+    imagenInspiracion: "",
+    aroma: "Aroma de prueba 1",
+    clasificacion: "Oriental",
+    momento: "Noche",
+    etiquetas: ["edicion-limitada", "esencias-master"],
+    descripcion: "Registro de prueba para comprobar varias clasificaciones activas a la vez.",
+    disponible: true
+  },
+  {
     id: "demo-02",
+    clave: "",
     nombre: "Demostración 02",
     categoria: "fragancias",
     subcategoria: "hombre",
@@ -99,11 +160,16 @@ const PRODUCTOS = [
     imagen: "",
     inspiracion: "",
     imagenInspiracion: "",
+    aroma: "",
+    clasificacion: "",
+    momento: "",
+    etiquetas: [],
     descripcion: "Registro de prueba para la vista de fragancias de hombre.",
     disponible: true
   },
   {
     id: "demo-03",
+    clave: "",
     nombre: "Demostración 03",
     categoria: "fragancias",
     subcategoria: "unisex",
@@ -113,11 +179,16 @@ const PRODUCTOS = [
     imagen: "",
     inspiracion: "",
     imagenInspiracion: "",
+    aroma: "",
+    clasificacion: "",
+    momento: "",
+    etiquetas: [],
     descripcion: "Registro de prueba para la vista unisex y para el buscador.",
     disponible: true
   },
   {
     id: "demo-04",
+    clave: "",
     nombre: "Demostración 04",
     categoria: "cuidado-personal",
     subcategoria: "",
@@ -127,6 +198,10 @@ const PRODUCTOS = [
     imagen: "",
     inspiracion: "",
     imagenInspiracion: "",
+    aroma: "",
+    clasificacion: "",
+    momento: "",
+    etiquetas: [],
     descripcion: "Registro de prueba fuera de fragancias, para comprobar los filtros del buscador.",
     disponible: true
   }
@@ -152,6 +227,43 @@ const Datos = {
     return PRODUCTOS.filter(p =>
       p.categoria === idCat && (!idSub || p.subcategoria === idSub)
     );
+  },
+
+  /* Catálogo filtrable de una subcategoría de Fragancias (hoy: Mujer).
+     criterios = { texto, etiqueta, inspiracion, aroma }, todos opcionales
+     y combinables entre sí sobre el mismo conjunto de productos. */
+  explorar(idSub, criterios){
+    criterios = criterios || {};
+    const texto = String(criterios.texto || "").trim().toLowerCase();
+    const etiqueta = criterios.etiqueta || "todas";
+    const inspiracion = criterios.inspiracion || "";
+    const aroma = criterios.aroma || "";
+
+    return PRODUCTOS.filter(p => {
+      if (p.categoria !== "fragancias" || p.subcategoria !== idSub) return false;
+      if (etiqueta !== "todas" && !(p.etiquetas || []).includes(etiqueta)) return false;
+      if (inspiracion && p.inspiracion !== inspiracion) return false;
+      if (aroma && p.aroma !== aroma) return false;
+      if (texto){
+        const campos = (p.nombre + " " + (p.clave || "") + " " + p.inspiracion).toLowerCase();
+        if (!campos.includes(texto)) return false;
+      }
+      return true;
+    });
+  },
+
+  /* Valores únicos de un campo dentro de una lista, con conteo — usado por
+     "Explorar por inspiración" y "Explorar por aroma". Crece solo con los datos:
+     si una familia tiene 10 productos aparece con 10; si luego tiene 15, con 15. */
+  valoresUnicos(lista, campo){
+    const conteo = new Map();
+    lista.forEach(p => {
+      const v = p[campo];
+      if (!v) return;
+      conteo.set(v, (conteo.get(v) || 0) + 1);
+    });
+    return Array.from(conteo, ([valor, cantidad]) => ({ valor: valor, cantidad: cantidad }))
+      .sort((a, b) => a.valor.localeCompare(b.valor, "es"));
   },
 
   /* Búsqueda por nombre e inspiración. Se ampliará en la Fase 2. */

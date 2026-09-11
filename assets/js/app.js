@@ -112,6 +112,53 @@
     campo.focus({ preventScroll: true });
   }
 
+  /* ── Fragancias Mujer: buscador + tres exploradores ─────── */
+  function enlazarFraganciasMujer(segmentos){
+    if (segmentos[0] !== "fragancias" || segmentos[1] !== "mujer") return;
+
+    const campo = document.getElementById("mujer-busqueda");
+    const caja  = document.getElementById("mujer-resultados");
+    if (!campo || !caja) return;
+
+    const botonesEtiqueta    = Array.from(document.querySelectorAll("[data-explorar]"));
+    const botonesInspiracion = Array.from(document.querySelectorAll("[data-inspiracion]"));
+    const botonesAroma       = Array.from(document.querySelectorAll("[data-aroma]"));
+
+    const estado = { texto: "", etiqueta: "todas", inspiracion: "", aroma: "" };
+
+    function pintar(){
+      caja.innerHTML = resultadosMujer(Datos.explorar("mujer", estado));
+    }
+
+    campo.addEventListener("input", () => {
+      estado.texto = campo.value;
+      pintar();
+    });
+
+    botonesEtiqueta.forEach(b => {
+      b.addEventListener("click", () => {
+        estado.etiqueta = b.dataset.explorar;
+        botonesEtiqueta.forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+        pintar();
+      });
+    });
+
+    /* Inspiración y aroma son facetas opcionales: tocar la ya activa la quita. */
+    function enlazarFaceta(botones, clave){
+      botones.forEach(b => {
+        b.addEventListener("click", () => {
+          const activo = b.getAttribute("aria-pressed") === "true";
+          botones.forEach(o => o.setAttribute("aria-pressed", "false"));
+          estado[clave] = activo ? "" : b.dataset[clave];
+          if (!activo) b.setAttribute("aria-pressed", "true");
+          pintar();
+        });
+      });
+    }
+    enlazarFaceta(botonesInspiracion, "inspiracion");
+    enlazarFaceta(botonesAroma, "aroma");
+  }
+
   /* ── Arranque ──────────────────────────────────────────── */
   pieEntregas.textContent = CONFIG.entregas;
   construirMenu();
@@ -119,5 +166,6 @@
   Router.iniciar(contenido, (vista, segmentos) => {
     actualizarBarra(vista);
     enlazarBuscador(segmentos);
+    enlazarFraganciasMujer(segmentos);
   });
 })();

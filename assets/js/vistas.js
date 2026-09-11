@@ -27,6 +27,7 @@ function tarjetaProducto(p){
     marco(cat ? cat.glifo : "frasco", "Foto pendiente") +
     '<div class="producto__cuerpo">' +
       '<h3 class="producto__nombre">' + esc(p.nombre) + "</h3>" +
+      (p.clave ? '<p class="producto__clave">Clave ' + esc(p.clave) + "</p>" : "") +
       '<p class="producto__inspiracion">' + (p.inspiracion ? "Inspirada en " + esc(p.inspiracion) : "Referencia pendiente") + "</p>" +
       '<p class="producto__precio">' + esc(Datos.precio(p.precio)) + "</p>" +
       '<p class="producto__ver">Ver producto</p>' +
@@ -118,6 +119,88 @@ function vistaFragancias(){
   };
 }
 
+/* ── FRAGANCIAS MUJER (explorador de catálogo) ───────────── */
+/* Interfaz específica de "Mujer": buscador + tres exploradores
+   (clasificación, inspiración, aroma) sobre el mismo conjunto de
+   productos. Hombre, Unisex y Otras categorías siguen usando
+   vistaLista() sin cambios. */
+function vistaFraganciasMujer(){
+  const base = Datos.explorar("mujer", {});
+  const inspiraciones = Datos.valoresUnicos(base, "inspiracion");
+  const aromas = Datos.valoresUnicos(base, "aroma");
+
+  const chip = (atributo, valor, texto, activo, cuenta) =>
+    '<button class="filtro" type="button" data-' + atributo + '="' + esc(valor) + '" aria-pressed="' + activo + '">' +
+      esc(texto) + (cuenta ? '<span class="filtro__cuenta">' + cuenta + "</span>" : "") +
+    "</button>";
+
+  const chipsEtiquetas = FILTROS_EXPLORAR
+    .map((f, i) => chip("explorar", f.id, f.nombre, i === 0, ""))
+    .join("");
+
+  const chipsInspiracion = inspiraciones
+    .map(x => chip("inspiracion", x.valor, x.valor, false, x.cantidad))
+    .join("");
+
+  const chipsAroma = aromas
+    .map(x => chip("aroma", x.valor, x.valor, false, x.cantidad))
+    .join("");
+
+  const html =
+    cabezaSeccion("Fragancias Mujer", "Busca por nombre, clave o inspiración, o explora el catálogo por clasificación, inspiración y aroma.") +
+
+    '<div class="busqueda">' +
+      '<svg viewBox="0 0 32 32" aria-hidden="true">' + GLIFOS.lupa + "</svg>" +
+      '<label class="oculto-visual" for="mujer-busqueda">Buscar fragancias de mujer</label>' +
+      '<input id="mujer-busqueda" type="search" autocomplete="off" placeholder="Buscar por nombre, clave o inspiración">' +
+    "</div>" +
+
+    '<section class="explorador">' +
+      '<h2 class="explorador__titulo">Explorar fragancias</h2>' +
+      '<div class="filtros" role="group" aria-label="Filtrar por clasificación">' + chipsEtiquetas + "</div>" +
+    "</section>" +
+
+    '<section class="explorador">' +
+      '<h2 class="explorador__titulo">Explorar por inspiración</h2>' +
+      (chipsInspiracion
+        ? '<div class="filtros" role="group" aria-label="Filtrar por inspiración">' + chipsInspiracion + "</div>"
+        : '<div class="aviso">Las familias de inspiración aparecerán aquí cuando se incorporen los datos reales.</div>') +
+    "</section>" +
+
+    '<section class="explorador">' +
+      '<h2 class="explorador__titulo">Explorar por aroma</h2>' +
+      (chipsAroma
+        ? '<div class="filtros" role="group" aria-label="Filtrar por aroma">' + chipsAroma + "</div>"
+        : '<div class="aviso">Los aromas aparecerán aquí cuando se incorporen los datos reales.</div>') +
+    "</section>" +
+
+    '<section class="explorador">' +
+      '<div id="mujer-resultados">' + resultadosMujer(base) + "</div>" +
+    "</section>";
+
+  return {
+    titulo: "Fragancias Mujer",
+    ruta: [
+      { texto: "Inicio", destino: "#/inicio" },
+      { texto: "Fragancias", destino: "#/fragancias" },
+      { texto: "Mujer" }
+    ],
+    regreso: "#/fragancias",
+    html: html
+  };
+}
+
+/* Resultados del explorador de Mujer. Se redibuja al buscar o filtrar,
+   sin recargar la vista. Preparado para las 95 fragancias reales. */
+function resultadosMujer(lista){
+  if (!lista.length){
+    return '<div class="aviso"><strong>Sin resultados.</strong> Ajusta la búsqueda o los filtros para ver otras fragancias.</div>';
+  }
+  return '<p class="resultados__conteo">' + lista.length +
+      (lista.length === 1 ? " fragancia" : " fragancias") + "</p>" +
+    '<div class="productos">' + lista.map(tarjetaProducto).join("") + "</div>";
+}
+
 /* ── LISTA DE PRODUCTOS (categoría o subcategoría) ───────── */
 function vistaLista(idCat, idSub){
   const cat = Datos.categoria(idCat);
@@ -167,7 +250,7 @@ function vistaProducto(id){
   const sub = p.subcategoria ? Datos.subcategoria(p.categoria, p.subcategoria) : null;
   const destinoRegreso = sub ? "#/" + cat.id + "/" + sub.id : "#/" + cat.id;
 
-  const etiquetas = [cat ? cat.nombre : "", p.genero, p.presentacion]
+  const etiquetas = [cat ? cat.nombre : "", p.genero, p.presentacion, p.momento]
     .filter(Boolean)
     .map(t => '<span class="marca">' + esc(t) + "</span>")
     .join("");
@@ -205,6 +288,9 @@ function vistaProducto(id){
           fila("Categoría", cat ? cat.nombre : "—") +
           fila("Género", p.genero || "—") +
           fila("Presentación", p.presentacion || "—") +
+          (p.clave ? fila("Clave", p.clave) : "") +
+          (p.aroma ? fila("Aroma", p.aroma) : "") +
+          (p.clasificacion ? fila("Clasificación", p.clasificacion) : "") +
           fila("Descripción", p.descripcion || "Pendiente.") +
         "</div>" +
 

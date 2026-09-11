@@ -56,6 +56,7 @@ const Router = {
     }
 
     if (raiz === "fragancias"){
+      if (s[1] === "mujer") return vistaFraganciasMujer();
       return s[1] ? vistaLista("fragancias", s[1]) : vistaFragancias();
     }
 
