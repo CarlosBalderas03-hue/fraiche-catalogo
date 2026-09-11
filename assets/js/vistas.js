@@ -70,6 +70,8 @@ function vistaInicio(){
   ).join("");
 
   const html =
+    '<div class="pagina-inicio">' +
+
     '<section class="portada">' +
       '<h1 class="portada__marca">' + esc(CONFIG.marca) + "</h1>" +
       '<p class="portada__linea">' + esc(CONFIG.lema) + "</p>" +
@@ -92,7 +94,9 @@ function vistaInicio(){
       '<div class="entrega">' + glifo("camion", "") +
         "<span>" + esc(CONFIG.entregas) + "</span>" +
       "</div>" +
-    "</section>";
+    "</section>" +
+
+    "</div>";
 
   return { titulo: CONFIG.marca, ruta: [], regreso: "", html: html };
 }
@@ -125,13 +129,14 @@ function vistaFragancias(){
 }
 
 /* ── FRAGANCIAS MUJER (explorador de catálogo) ───────────── */
-/* Interfaz específica de "Mujer": buscador (nombre, clave, casa,
-   referencia) + clasificación comercial (Fase A, intacta) + filtro
-   casa de inspiración → referencia (desde el catálogo maestro
-   CASAS_INSPIRACION, nunca escrito a mano en la interfaz) + aroma
-   (queda preparado; el catálogo maestro todavía no trae ese dato).
-   Hombre, Unisex y Otras categorías siguen usando vistaLista() sin
-   cambios. */
+/* Interfaz específica de "Mujer": buscador (nombre, clave, casa) +
+   clasificación comercial (Fase A, intacta) + casa de inspiración
+   (desde el catálogo maestro CASAS_INSPIRACION, nunca escrito a mano
+   en la interfaz) + aroma (queda preparado; el catálogo maestro
+   todavía no trae ese dato). "Explorar por referencia" se retiró de
+   la interfaz — producto.referenciaInspiracion y CASAS_INSPIRACION
+   siguen intactos en los datos para uso futuro. Hombre, Unisex y
+   Otras categorías siguen usando vistaLista() sin cambios. */
 function vistaFraganciasMujer(){
   const base = Datos.explorar("mujer", {});
   const aromas = Datos.valoresUnicos(base, "aroma");
@@ -155,12 +160,12 @@ function vistaFraganciasMujer(){
     .join("");
 
   const html =
-    cabezaSeccion("Fragancias para Mujer", base.length + " fragancias para explorar por nombre, clave, casa de inspiración o referencia.") +
+    cabezaSeccion("Fragancias para Mujer", base.length + " fragancias para explorar por nombre, clave o inspiración.") +
 
     '<div class="busqueda">' +
       '<svg viewBox="0 0 32 32" aria-hidden="true">' + GLIFOS.lupa + "</svg>" +
       '<label class="oculto-visual" for="mujer-busqueda">Buscar fragancias de mujer</label>' +
-      '<input id="mujer-busqueda" type="search" autocomplete="off" placeholder="Buscar por nombre, clave, casa o referencia">' +
+      '<input id="mujer-busqueda" type="search" autocomplete="off" placeholder="Buscar por nombre, clave o inspiración">' +
     "</div>" +
     '<button class="limpiar" type="button" id="mujer-limpiar">Limpiar filtros</button>' +
 
@@ -172,11 +177,6 @@ function vistaFraganciasMujer(){
     '<section class="explorador">' +
       '<h2 class="explorador__titulo">Explorar por casa de inspiración</h2>' +
       '<div class="filtros" role="group" aria-label="Filtrar por casa de inspiración">' + chipsCasa + "</div>" +
-    "</section>" +
-
-    '<section class="explorador">' +
-      '<h2 class="explorador__titulo">Explorar por referencia</h2>' +
-      '<div id="mujer-referencias">' + renderizarReferencias(null) + "</div>" +
     "</section>" +
 
     '<section class="explorador">' +
@@ -200,24 +200,6 @@ function vistaFraganciasMujer(){
     regreso: "#/fragancias",
     html: html
   };
-}
-
-/* Panel de referencias de una casa de inspiración. Sin casa seleccionada
-   muestra una pista; con casa seleccionada, sus referencias como chips
-   (desde CASAS_INSPIRACION, nunca escritas a mano); si la casa todavía
-   no tiene referencias registradas, lo dice explícitamente. */
-function renderizarReferencias(idCasa){
-  if (!idCasa){
-    return '<div class="aviso">Elige una casa de inspiración para ver sus referencias.</div>';
-  }
-  const casa = Datos.casaInspiracion(idCasa);
-  if (!casa || !casa.referencias.length){
-    return '<div class="aviso">Esta casa todavía no tiene referencias registradas.</div>';
-  }
-  const chips = casa.referencias
-    .map(r => '<button class="filtro" type="button" data-referencia="' + esc(r) + '" aria-pressed="false">' + esc(r) + "</button>")
-    .join("");
-  return '<div class="filtros" role="group" aria-label="Filtrar por referencia de ' + esc(casa.nombre) + '">' + chips + "</div>";
 }
 
 /* Resultados del explorador de Mujer. Se redibuja al buscar o filtrar,
